@@ -4,3 +4,5 @@
 
 azure-functions
 requests
+pyowm
+git+https://github.com/MTG/freesound-python
