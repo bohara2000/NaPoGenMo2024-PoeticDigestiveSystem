@@ -131,7 +131,7 @@ def DataFetcher(req: func.HttpRequest) -> func.HttpResponse:
             
 
     if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
+        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully!")
     else:
         return func.HttpResponse(
              json.dumps(response),

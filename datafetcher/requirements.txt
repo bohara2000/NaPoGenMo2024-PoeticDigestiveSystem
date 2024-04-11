@@ -4,5 +4,6 @@
 
 azure-functions
 requests
-pyowm
+# pyowm
+geopy
 git+https://github.com/MTG/freesound-python
