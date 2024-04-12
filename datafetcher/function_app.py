@@ -167,15 +167,59 @@ def GetWeatherData(query, fields):
         return result
 
 
+def GenerateSpeechFromTextElevenlabs(text, filename):
+    # result = {}
+    # try:       
+    #     CHUNK_SIZE = 1024
+    #     url = "https://api.elevenlabs.io/v1/text-to-speech/GBv7mTt0atIp3Br8iCZE"
+
+    #     headers = {
+    #     "Accept": "audio/mpeg",
+    #     "Content-Type": "application/json",
+    #     "xi-api-key": os.environ["ELEVENLABS_API_KEY"]
+    #     }
+
+        
+    #     data = {
+    #         "text": text,
+    #         "model_id": "eleven_monolingual_v1",
+    #         "voice_settings": {
+    #             "stability": 0.5,
+    #             "similarity_boost": 0.5
+    #         }
+    #     }
+    
+    #     response = requests.post(url, json=data, headers=headers)
+    #     with open(filename, 'wb') as f:
+    #         for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+    #             if chunk:
+    #                 f.write(chunk)
+                    
+    #     result = {
+    #         "audio_file": filename,
+    #         "status": "success"
+    #     }
+    # except Exception as e:
+    #     result = {
+    #         "status": "error",
+    #         "error": f"An error occurred: {str(e)}"
+    #     }
+    #     logging.info(json.dumps(result))
+    #     raise e
+    # finally:
+    #     return result
+    return None
+    
 def GetSomeOtherData(query, fields):
     return "nothing defined"
 
 def switch_case_api(apiName, query, fields):
     # create a dictionary of the API names and the functions to call
-        
+    logging.info(f"apiName: {apiName}")
     switch_dict = {
         "freesound": GetFreeSoundAudio,
         "owm": GetWeatherData,
+        "elevenlabs": GenerateSpeechFromTextElevenlabs
     }
     return switch_dict.get(apiName, GetSomeOtherData)(query, fields)
 
@@ -199,6 +243,7 @@ def DataFetcher(req: func.HttpRequest, outputBlobMp3: func.Out[str]) -> func.Htt
             query = req_body.get('query')
             fields = req_body.get('fields')
             response = switch_case_api(api_to_call, query, fields)
+            logging.info(f"response: {json.dumps(response)}")
             response["id"] = id
             
     if api_to_call == 'freesound':
