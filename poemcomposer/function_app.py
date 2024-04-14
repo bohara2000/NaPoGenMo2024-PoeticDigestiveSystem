@@ -87,8 +87,8 @@ def get_poem_from_chatgpt(prompt):
     return (poem, color_scheme)
 
 
-@app.route(route="PoemComposer/{id:guid}", auth_level=func.AuthLevel.ANONYMOUS)
-@app.blob_output(arg_name='outputBlobPoem', path='poems/{id}.txt', connection='MyLocalStorage')
+@app.route(route="PoemComposer/{id:guid}", methods=['POST'], auth_level=func.AuthLevel.ANONYMOUS)
+@app.blob_output(arg_name='outputBlobPoem', path='poems/{id}.txt', connection='VIDEO_POETRY_STORAGE')
 def PoemComposer(req: func.HttpRequest, outputBlobPoem: func.Out[str]) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 

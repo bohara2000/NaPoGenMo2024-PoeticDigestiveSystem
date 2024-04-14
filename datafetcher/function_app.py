@@ -225,8 +225,8 @@ def switch_case_api(apiName, query, fields):
 
 
 
-@app.route(route="DataFetcher/{id:guid}", auth_level=func.AuthLevel.ANONYMOUS)
-@app.blob_output(arg_name='outputBlobMp3', path='weathervids/{id}.mp3', connection='MyLocalStorage')
+@app.route(route="DataFetcher/{id:guid}", methods=['POST'], auth_level=func.AuthLevel.ANONYMOUS)
+@app.blob_output(arg_name='outputBlobMp3', path='weathervids/{id}.mp3', connection='VIDEO_POETRY_STORAGE')
 def DataFetcher(req: func.HttpRequest, outputBlobMp3: func.Out[str]) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
@@ -269,5 +269,5 @@ def DataFetcher(req: func.HttpRequest, outputBlobMp3: func.Out[str]) -> func.Htt
     else:
         return func.HttpResponse(
              json.dumps(response),
-             status_code=200
+             mimetype="application/json"
         )
