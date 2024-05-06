@@ -6,4 +6,5 @@ azure-functions
 requests
 # pyowm
 geopy
+geonamescache
 git+https://github.com/MTG/freesound-python

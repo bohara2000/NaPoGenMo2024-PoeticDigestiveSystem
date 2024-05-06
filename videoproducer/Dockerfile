@@ -3,7 +3,7 @@
 FROM mcr.microsoft.com/azure-functions/python:4-python3.11
 
 RUN apt-get update
-RUN apt-get install -y build-essential xvfb xdg-utils wget ffmpeg libpq-dev vim libmagick++-dev fonts-liberation sox bc --fix-missing
+RUN apt-get install -y build-essential xvfb xdg-utils wget ffmpeg libpq-dev vim libmagick++-dev fonts-liberation sox bc git --fix-missing
 RUN apt-get clean
 
 ## ImageMagicK Installation ##

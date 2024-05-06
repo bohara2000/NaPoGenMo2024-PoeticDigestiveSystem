@@ -4,6 +4,8 @@ import azure.functions as func
 import json
 import logging
 import requests
+import geonamescache
+import random
 
 # importing weather libraries
 from geopy.geocoders import Nominatim
@@ -213,10 +215,37 @@ def GenerateSpeechFromTextElevenlabs(text, filename):
 def GetSomeOtherData(query, fields):
     return "nothing defined"
 
+def GetRandomUSCityAndState(query, fields):
+    # Define the implementation of the GetRandomUSCityAndState function here
+    gc = geonamescache.GeonamesCache()
+
+    # if the query has a state, use that state, otherwise pick a random state
+    if query and "state" in query:
+        random_state = query['state']
+    else:
+        # pick a random state
+        states = gc.get_us_states()
+        random_state = random.choice(list(states.items()))[1]['code']
+
+    # pick a random city in that state
+    cities = gc.get_cities()
+    US_cities = [cities[key] for key in list(cities.keys()) 
+                if cities[key]['countrycode'] == 'US' and cities[key]['admin1code'] == random_state]
+    random_city = random.choice(list(US_cities))
+
+    location = {
+        "city": random_city['name'],
+        "state": random_state,
+        "country": random_city['countrycode']
+    }
+    
+    return location
+
 def switch_case_api(apiName, query, fields):
     # create a dictionary of the API names and the functions to call
     logging.info(f"apiName: {apiName}")
     switch_dict = {
+        "randomlocation": GetRandomUSCityAndState,
         "freesound": GetFreeSoundAudio,
         "owm": GetWeatherData,
         "elevenlabs": GenerateSpeechFromTextElevenlabs

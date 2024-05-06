@@ -1,3 +1,4 @@
+import random
 import azure.functions as func
 import datetime
 import json
@@ -16,7 +17,7 @@ You may use any one of the following forms: free verse (max 10 lines), sonnet, h
 
 You have sensory systems that map data to emotional or sensory states. 
 Temperature maps to  your equivalent of a pleasure center, increasing with temperature, with your preferred range from 65 - 87 degrees Fahrenheit.
-Barometric pressure maps to a sensor that measures umami, increasing with pressure, with your ideal range from 25 - 30 inHg. 
+Barometric pressure maps to a sensor that measures %s, increasing with pressure, with your ideal range from 25 - 30 inHg. 
 Wind speed maps to your equivalent of a fear response, increasing with wind speed, with your ideal range between 0 and 15 mph.
 
 Write the poem using allusions to your sensors. Do not directly use the names of those sensors.
@@ -52,7 +53,7 @@ Also, incorporate imagery derived from a single species of mushroom native to th
 
 # define a function that will send a message to the ChatGPT API and return the response
 def get_poem_from_chatgpt(prompt):
-
+    tastes = ['sweetness', 'sourness', 'bitternes', 'saltiness', 'umami']
     # turn prompt from json to a string
     prompt_as_string = json.dumps(prompt)
 
@@ -60,7 +61,7 @@ def get_poem_from_chatgpt(prompt):
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": system_prompt % random.choice(tastes)},
             {"role": "user", "content": prompt_as_string},
         ],
         temperature=1,
@@ -87,24 +88,54 @@ def get_poem_from_chatgpt(prompt):
     return (poem, color_scheme)
 
 
-@app.route(route="PoemComposer/{id:guid}", methods=['POST'], auth_level=func.AuthLevel.ANONYMOUS)
+# @app.route(route="PoemComposer/{id:guid}", methods=['POST'], auth_level=func.AuthLevel.ANONYMOUS)
+# @app.queue_trigger(arg_name="azqueue", queue_name="weatherdata", connection="VIDEO_POETRY_STORAGE") 
+# @app.blob_output(arg_name='outputBlobPoem', path='poems/{id}.txt', connection='VIDEO_POETRY_STORAGE')
+# @app.queue_output(arg_name='queuePoem', queue_name='weathermessages', connection='VIDEO_POETRY_STORAGE')
+# def PoemComposer(azqueue: func.QueueMessage, outputBlobPoem: func.Out[str], queuePoem: func.Out[str]):
+#     logging.info('Python Queue trigger function processed a request.')
+    
+#     # create variable to hold message body
+#     message_body = json.loads(azqueue.get_body().decode('utf-8'))
+    
+
+#     id = message_body['id']
+    
+#     poem, color_scheme = get_poem_from_chatgpt(message_body)
+
+#     response = { "id": id, "poem": poem, "color_scheme": color_scheme, "weather_data": message_body}
+
+#     # save the poem to a text file
+#     with open(f"tmp_poem.txt", "w") as f:
+#         f.write(poem)
+
+#     # output the poem to blob storage
+#     poem_file = open("tmp_poem.txt", "rb")
+#     outputBlobPoem.set(poem_file.read())
+
+#     print(f"saved poem as: {id}.txt")
+    
+#     # ouput the poem message to the queue
+#     queuePoem.set(json.dumps(response))
+
+
+@app.queue_trigger(arg_name="azqueue", queue_name="weatherdata",
+                               connection="VIDEO_POETRY_STORAGE") 
 @app.blob_output(arg_name='outputBlobPoem', path='poems/{id}.txt', connection='VIDEO_POETRY_STORAGE')
-def PoemComposer(req: func.HttpRequest, outputBlobPoem: func.Out[str]) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+@app.queue_output(arg_name='queuePoem', queue_name='weathermessages', connection='VIDEO_POETRY_STORAGE')
+def PoemComposer(azqueue: func.QueueMessage, outputBlobPoem: func.Out[str], queuePoem: func.Out[str] ):
+    logging.info('Python Queue trigger processed a message: %s',
+                azqueue.get_body().decode('utf-8'))
+    
+    # create variable to hold message body
+    message_body = json.loads(azqueue.get_body().decode('utf-8'))
+    
 
-    id = req.route_params.get('id')
-    name = req.params.get('name')
-    if not name:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            name = req_body.get('name')
+    id = message_body['id']
+    
+    poem, color_scheme = get_poem_from_chatgpt(message_body)
 
-    poem, color_scheme = get_poem_from_chatgpt(req_body)
-
-    response = { "id": id, "poem": poem, "color_scheme": color_scheme }
+    response = { "id": id, "poem": poem, "color_scheme": color_scheme, "weather_data": message_body}
 
     # save the poem to a text file
     with open(f"tmp_poem.txt", "w") as f:
@@ -115,11 +146,6 @@ def PoemComposer(req: func.HttpRequest, outputBlobPoem: func.Out[str]) -> func.H
     outputBlobPoem.set(poem_file.read())
 
     print(f"saved poem as: {id}.txt")
-
-    if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
-    else:
-        return func.HttpResponse(
-             json.dumps(response),
-             status_code=200
-        )
+    
+    # ouput the poem message to the queue
+    queuePoem.set(json.dumps(response))
